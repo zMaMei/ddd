@@ -1,5 +1,5 @@
 import { createContext, useContext, useState } from 'react';
-import { loadCurrentUser, saveCurrentUser } from '../api/request';
+import { clearAuth, loadCurrentUser, saveCurrentUser } from '../api/request';
 
 const UserContext = createContext(null);
 
@@ -12,7 +12,7 @@ export function UserProvider({ children }) {
   };
 
   const logout = () => {
-    saveCurrentUser(null);
+    clearAuth();
     setUser(null);
   };
 

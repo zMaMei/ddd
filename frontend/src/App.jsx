@@ -4,9 +4,11 @@ import {
   FileTextOutlined,
   AuditOutlined,
   WalletOutlined,
+  UserOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
 import { UserProvider, useUser } from './context/UserContext';
+import { authLogout } from './api/leave';
 import { ROLE_NAMES } from './constants';
 import Login from './pages/Login';
 import MyRequests from './pages/MyRequests';
@@ -14,6 +16,7 @@ import RequestEdit from './pages/RequestEdit';
 import RequestDetail from './pages/RequestDetail';
 import Approvals from './pages/Approvals';
 import Balances from './pages/Balances';
+import Profile from './pages/Profile';
 
 const { Header, Sider, Content } = Layout;
 
@@ -29,6 +32,7 @@ function RequireUser() {
       ? [{ key: '/approvals', icon: <AuditOutlined />, label: <NavLink to="/approvals">审批中心</NavLink> }]
       : []),
     { key: '/balances', icon: <WalletOutlined />, label: <NavLink to="/balances">假期余额</NavLink> },
+    { key: '/profile', icon: <UserOutlined />, label: <NavLink to="/profile">个人信息</NavLink> },
   ];
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -41,7 +45,15 @@ function RequireUser() {
           <Space size="middle">
             <span>{user.name}</span>
             <Tag color={user.role === 'MANAGER' ? 'gold' : 'blue'}>{ROLE_NAMES[user.role]}</Tag>
-            <Button type="text" icon={<LogoutOutlined />} onClick={logout}>
+            <Button
+              type="text"
+              icon={<LogoutOutlined />}
+              onClick={() => {
+                // 尽力通知后端使凭证失效；无论成败都清除本地登录态
+                authLogout().catch(() => {});
+                logout();
+              }}
+            >
               退出
             </Button>
           </Space>
@@ -68,6 +80,7 @@ export default function App() {
             <Route path="/requests/:code" element={<RequestDetail />} />
             <Route path="/approvals" element={<Approvals />} />
             <Route path="/balances" element={<Balances />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

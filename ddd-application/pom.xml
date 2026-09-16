@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.win</groupId>
+        <artifactId>ddd</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>ddd-application</artifactId>
+    <name>ddd-application</name>
+    <description>应用层：用例编排，协调领域对象完成业务操作，不依赖 Web/持久化技术</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.win</groupId>
+            <artifactId>ddd-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

@@ -14,49 +14,30 @@
     <groupId>com.win</groupId>
     <artifactId>ddd</artifactId>
     <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>ddd</name>
-    <description>DDD 基础架构项目</description>
+    <description>DDD 基础架构项目（多模块，依赖逐层递进）</description>
 
     <properties>
         <java.version>21</java.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-h2console</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+    <!--
+      模块依赖递进关系（下层不感知上层，领域层不依赖任何 Spring 技术）：
+        ddd-common           纯 Java，零第三方依赖
+        ddd-domain         → ddd-common                领域层：实体/值对象/领域服务/仓储接口
+        ddd-application    → ddd-domain                应用层：用例编排
+        ddd-infrastructure → ddd-domain                基础设施层：JPA/安全等技术实现
+        ddd-userinterface  → ddd-application           用户接口层：REST 控制器
+        ddd-bootstrap      → application + infrastructure + userinterface
+                           启动装配：启动类、配置文件、数据库驱动、打包插件
+    -->
+    <modules>
+        <module>ddd-common</module>
+        <module>ddd-domain</module>
+        <module>ddd-application</module>
+        <module>ddd-infrastructure</module>
+        <module>ddd-userinterface</module>
+        <module>ddd-bootstrap</module>
+    </modules>
 </project>

@@ -9,21 +9,58 @@
 -- =============================================================
 
 -- -------------------------------------------------------------
--- 1. 员工表（实体）
+-- 1. 部门表（employee 域实体；运营数据，运行时可增删，不用枚举）
+-- -------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS t_department (
+    code       VARCHAR(32)  NOT NULL COMMENT '部门编码，如 D001',
+    name       VARCHAR(64)  NOT NULL COMMENT '部门名，全局唯一',
+    created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_department PRIMARY KEY (code),
+    CONSTRAINT uk_department_name UNIQUE (name)
+);
+
+-- -------------------------------------------------------------
+-- 2. 员工档案表（employee 域实体 Employee：姓名/部门归属，与账号分离）
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS t_employee (
-    code         VARCHAR(32)  NOT NULL COMMENT '员工工号，业务标识（对应 AbstractCode）',
-    name         VARCHAR(64)  NOT NULL COMMENT '姓名',
-    department   VARCHAR(64)  NOT NULL COMMENT '部门',
-    role         VARCHAR(16)  NOT NULL COMMENT '角色：STAFF 员工 / MANAGER 主管',
-    join_date    DATE         NULL     COMMENT '入职日期（进阶：按工龄生成年假额度）',
-    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    code            VARCHAR(32)  NOT NULL COMMENT '员工工号，业务标识（对应 AbstractCode），如 EMP006',
+    name            VARCHAR(64)  NOT NULL COMMENT '姓名（Name 值对象：2~32 字，注册/改名共用规则）',
+    department_code VARCHAR(32)  NOT NULL COMMENT '归属部门编码（引用校验 t_department）',
+    join_date       DATE         NULL     COMMENT '入职日期（进阶：按工龄生成年假额度）',
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_employee PRIMARY KEY (code)
 );
 
 -- -------------------------------------------------------------
--- 2. 假期余额表（实体，按 员工+类型+年度 唯一）
+-- 3. 账号表（auth 域聚合根 Account：登录凭证与角色，工号 1:1 关联档案）
+-- -------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS t_account (
+    username      VARCHAR(32)  NOT NULL COMMENT '登录用户名即账号标识，4~32位字母/数字/下划线',
+    password      VARCHAR(100) NOT NULL COMMENT '密码哈希（BCrypt 等），禁止明文',
+    role          VARCHAR(16)  NOT NULL COMMENT '角色：STAFF 员工 / MANAGER 主管；注册固定 STAFF',
+    employee_code VARCHAR(32)  NOT NULL COMMENT '关联员工档案（1:1）',
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_account PRIMARY KEY (username),
+    CONSTRAINT uk_account_employee UNIQUE (employee_code)
+);
+
+-- -------------------------------------------------------------
+-- 4. 登录凭证表（方案 A：UUID token；若用 JWT 则无需此表）
+-- -------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS t_auth_token (
+    token      VARCHAR(64) NOT NULL COMMENT '凭证 UUID',
+    username   VARCHAR(32) NOT NULL COMMENT '所属账号',
+    expire_at  DATETIME    NOT NULL COMMENT '过期时间（建议签发时间 + 7 天）',
+    created_at DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_auth_token PRIMARY KEY (token)
+);
+
+CREATE INDEX IF NOT EXISTS idx_token_username ON t_auth_token (username);
+
+-- -------------------------------------------------------------
+-- 5. 假期余额表（实体，按 员工+类型+年度 唯一）
 --    独立于请假单聚合，跨聚合操作走领域服务 + 乐观锁
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS t_leave_balance (
@@ -43,7 +80,7 @@ CREATE TABLE IF NOT EXISTS t_leave_balance (
 );
 
 -- -------------------------------------------------------------
--- 3. 请假单表（聚合根 LeaveRequest）
+-- 6. 请假单表（聚合根 LeaveRequest）
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS t_leave_request (
     code           VARCHAR(32)  NOT NULL COMMENT '请假单号：LV + yyyyMMdd + 3位序列',
@@ -70,7 +107,7 @@ CREATE INDEX IF NOT EXISTS idx_leave_applicant ON t_leave_request (applicant_cod
 CREATE INDEX IF NOT EXISTS idx_leave_overlap ON t_leave_request (applicant_code, start_date, end_date);
 
 -- -------------------------------------------------------------
--- 4. 审批记录表（聚合内实体 ApprovalRecord，隶属请假单聚合）
+-- 7. 审批记录表（聚合内实体 ApprovalRecord，隶属请假单聚合）
 --    一张单可有多次提交→撤回→再提交，因此允许多条记录
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS t_leave_approval_record (
@@ -86,7 +123,7 @@ CREATE TABLE IF NOT EXISTS t_leave_approval_record (
 CREATE INDEX IF NOT EXISTS idx_approval_request ON t_leave_approval_record (request_code, created_at DESC);
 
 -- -------------------------------------------------------------
--- 5. 状态流转日志表（可选，建议做：由领域事件驱动写入，
+-- 8. 状态流转日志表（可选，建议做：由领域事件驱动写入，
 --    是练习"领域事件 + 事件监听器"的最佳落点）
 -- -------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS t_leave_request_log (
@@ -104,14 +141,28 @@ CREATE TABLE IF NOT EXISTS t_leave_request_log (
 CREATE INDEX IF NOT EXISTS idx_log_request ON t_leave_request_log (request_code, occurred_at);
 
 -- =============================================================
--- 初始化数据（对应 data.sql；前端模拟登录直接从员工表选人）
+-- 初始化数据（对应 data.sql）
+-- 种子账号密码均为 123456（password 列为 BCrypt 真实哈希，可直接登录）；
+-- 注册接口自助创建的账号角色固定 STAFF，MANAGER 仅由种子数据提供。
 -- =============================================================
-INSERT INTO t_employee (code, name, department, role, join_date) VALUES
-('EMP001', '张三', '研发部', 'STAFF',   '2023-07-01'),
-('EMP002', '李四', '研发部', 'STAFF',   '2024-03-15'),
-('EMP003', '王五', '产品部', 'STAFF',   '2022-01-10'),
-('MGR001', '赵总', '研发部', 'MANAGER', '2019-05-20'),
-('MGR002', '钱总', '产品部', 'MANAGER', '2020-11-01');
+INSERT INTO t_department (code, name) VALUES
+('D001', '研发部'),
+('D002', '产品部'),
+('D003', '人事部');
+
+INSERT INTO t_employee (code, name, department_code, join_date) VALUES
+('EMP001', '张三', 'D001', '2023-07-01'),
+('EMP002', '李四', 'D001', '2024-03-15'),
+('EMP003', '王五', 'D002', '2022-01-10'),
+('MGR001', '赵总', 'D001', '2019-05-20'),
+('MGR002', '钱总', 'D002', '2020-11-01');
+
+INSERT INTO t_account (username, password, role, employee_code) VALUES
+('zhangsan', '$2b$10$plo3nMqeAKJzs7klkbFiY.G4AUfcSR4O5JYL7H76.wBlfTYp.DdS2', 'STAFF',   'EMP001'),
+('lisi',     '$2b$10$plo3nMqeAKJzs7klkbFiY.G4AUfcSR4O5JYL7H76.wBlfTYp.DdS2', 'STAFF',   'EMP002'),
+('wangwu',   '$2b$10$plo3nMqeAKJzs7klkbFiY.G4AUfcSR4O5JYL7H76.wBlfTYp.DdS2', 'STAFF',   'EMP003'),
+('zhaomgr',  '$2b$10$plo3nMqeAKJzs7klkbFiY.G4AUfcSR4O5JYL7H76.wBlfTYp.DdS2', 'MANAGER', 'MGR001'),
+('qianmgr',  '$2b$10$plo3nMqeAKJzs7klkbFiY.G4AUfcSR4O5JYL7H76.wBlfTYp.DdS2', 'MANAGER', 'MGR002');
 
 INSERT INTO t_leave_balance (employee_code, leave_type, year, total_days) VALUES
 ('EMP001', 'ANNUAL',   2026, 10.0),
