@@ -18,4 +18,28 @@ public class Employee extends AbstractEntity<EmployeeCode> {
     public Employee(EmployeeCode code) {
         super(code);
     }
+
+    public Employee(EmployeeCode code, Name name, DepartmentCode departmentCode, LocalDate joinDate, LocalDateTime createdAt) {
+        super(code);
+        this.name = name;
+        this.departmentCode = departmentCode;
+        this.joinDate = joinDate;
+        this.createdAt = createdAt;
+    }
+
+    public Name getName() {
+        return name;
+    }
+
+    public DepartmentCode getDepartmentCode() {
+        return departmentCode;
+    }
+
+    public LocalDate getJoinDate() {
+        return joinDate;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 }

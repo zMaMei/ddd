@@ -12,8 +12,8 @@ public class Password extends AbstractValueObject<String> {
         }
     }
     public static Password hash(String raw, PasswordEncryptor encryptor) {
-        if (raw == null || raw.length() < 6 || raw.length() > 64) {
-            throw new IllegalArgumentException("密码长度需在6~64位之间");
+        if (raw == null || raw.length() < 6 || raw.length() > 32) {
+            throw new IllegalArgumentException("密码长度需在6~32位之间");
         }
         return new Password(encryptor.encode(raw));
     }

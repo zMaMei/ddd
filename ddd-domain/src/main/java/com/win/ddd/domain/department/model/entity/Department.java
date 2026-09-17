@@ -10,4 +10,8 @@ public class Department extends AbstractEntity<DepartmentCode> {
     public Department(DepartmentCode code) {
         super(code);
     }
+
+    public String getName() {
+        return name;
+    }
 }

@@ -20,5 +20,10 @@
             <artifactId>ddd-domain</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 应用层唯一允许的 Spring 依赖：仅事务注解（@Transactional） -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
     </dependencies>
 </project>
