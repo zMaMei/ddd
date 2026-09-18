@@ -7,8 +7,9 @@ public class Department extends AbstractEntity<DepartmentCode> {
 
     private String name;
 
-    public Department(DepartmentCode code) {
+    public Department(DepartmentCode code, String name) {
         super(code);
+        this.name = name;
     }
 
     public String getName() {

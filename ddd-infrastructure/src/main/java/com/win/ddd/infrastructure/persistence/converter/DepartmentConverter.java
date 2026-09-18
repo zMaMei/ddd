@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Component
 public class DepartmentConverter{
     public Department toDomain(DepartmentDO d){
-        return new Department(new DepartmentCode(d.getDepartmentCode()));
+        return new Department(new DepartmentCode(d.getDepartmentCode()),d.getName());
     }
 
     public DepartmentDO toDO(Department department){

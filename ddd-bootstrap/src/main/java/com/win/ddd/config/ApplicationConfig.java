@@ -1,5 +1,6 @@
 package com.win.ddd.config;
 
+import com.win.ddd.application.service.DepartmentService;
 import com.win.ddd.application.service.RegisterService;
 import com.win.ddd.application.service.TokenAuthService;
 import com.win.ddd.domain.auth.repository.AccountRepository;
@@ -17,6 +18,11 @@ public class ApplicationConfig {
     public TokenAuthService tokenAuthService(TokenAuthRepository tokenAuthRepository,
                                              AccountRepository accountRepository) {
         return new TokenAuthService(tokenAuthRepository, accountRepository);
+    }
+
+    @Bean
+    public DepartmentService departmentService(DepartmentRepository departmentRepository){
+        return new DepartmentService(departmentRepository);
     }
 
     @Bean
