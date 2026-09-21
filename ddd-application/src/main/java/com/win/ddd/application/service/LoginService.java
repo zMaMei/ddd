@@ -11,7 +11,9 @@ import com.win.ddd.domain.auth.model.valueobject.Username;
 import com.win.ddd.domain.auth.repository.AccountRepository;
 import com.win.ddd.domain.auth.repository.TokenAuthRepository;
 import com.win.ddd.domain.auth.service.PasswordEncryptor;
+import com.win.ddd.domain.department.model.entity.Department;
 import com.win.ddd.domain.department.repository.DepartmentRepository;
+import com.win.ddd.domain.employee.model.entity.Employee;
 import com.win.ddd.domain.employee.repository.EmployeeRepository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +24,15 @@ public class LoginService {
     private final TokenAuthRepository tokenAuthRepository;
     private final AccountRepository accountRepository;
     private final PasswordEncryptor passwordEncryptor;
+    private final EmployeeRepository employeeRepository;
+    private final DepartmentRepository departmentRepository;
 
-    public LoginService(TokenAuthRepository tokenAuthRepository, AccountRepository accountRepository, PasswordEncryptor passwordEncryptor) {
+    public LoginService(TokenAuthRepository tokenAuthRepository, AccountRepository accountRepository, PasswordEncryptor passwordEncryptor,EmployeeRepository employeeRepository,DepartmentRepository departmentRepository) {
         this.tokenAuthRepository = tokenAuthRepository;
         this.accountRepository = accountRepository;
         this.passwordEncryptor = passwordEncryptor;
+        this.employeeRepository = employeeRepository;
+        this.departmentRepository = departmentRepository;
     }
 
     @Transactional
@@ -38,10 +44,17 @@ public class LoginService {
         }
         TokenAuth tokenAuth = TokenAuth.issue(new Username(command.username()));
         tokenAuthRepository.save(tokenAuth);
+        Employee employee = employeeRepository.findByCode(account.getEmployeeCode())
+                .orElseThrow(() -> new BusinessException(40100,"没有找到该员工"));
+        Department department = departmentRepository.findByCode(employee.getDepartmentCode())
+                .orElseThrow(() -> new BusinessException(40100,"没有找到对应部门"));
         return new AuthResult(tokenAuth.getCode().value(),
                 new CurrentUser(
                         account.getEmployeeCode().value()
                         ,account.getCode().value()
+                        ,employee.getName().value()
+                        ,employee.getDepartmentCode().value()
+                        ,department.getName()
                         ,account.getRole().name()
                 )
         );

@@ -17,8 +17,8 @@ public class ApplicationConfig {
 
     @Bean   // 方法名 = Bean 名称；参数由 Spring 自动注入（infrastructure 的 @Repository 实现类）
     public TokenAuthService tokenAuthService(TokenAuthRepository tokenAuthRepository,
-                                             AccountRepository accountRepository) {
-        return new TokenAuthService(tokenAuthRepository, accountRepository);
+                                             AccountRepository accountRepository,EmployeeRepository employeeRepository,DepartmentRepository departmentRepository) {
+        return new TokenAuthService(tokenAuthRepository, accountRepository,employeeRepository,departmentRepository);
     }
 
     @Bean
@@ -27,8 +27,8 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public LoginService loginService(TokenAuthRepository tokenAuthRepository, AccountRepository accountRepository, PasswordEncryptor passwordEncryptor) {
-        return new LoginService(tokenAuthRepository,accountRepository,passwordEncryptor);
+    public LoginService loginService(TokenAuthRepository tokenAuthRepository, AccountRepository accountRepository, PasswordEncryptor passwordEncryptor,EmployeeRepository employeeRepository,DepartmentRepository departmentRepository) {
+        return new LoginService(tokenAuthRepository,accountRepository,passwordEncryptor,employeeRepository,departmentRepository);
     }
 
     @Bean

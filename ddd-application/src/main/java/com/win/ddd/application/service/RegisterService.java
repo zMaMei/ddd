@@ -12,6 +12,7 @@ import com.win.ddd.domain.auth.model.valueobject.Username;
 import com.win.ddd.domain.auth.repository.AccountRepository;
 import com.win.ddd.domain.auth.repository.TokenAuthRepository;
 import com.win.ddd.domain.auth.service.PasswordEncryptor;
+import com.win.ddd.domain.department.model.entity.Department;
 import com.win.ddd.domain.department.model.valueobject.DepartmentCode;
 import com.win.ddd.domain.department.repository.DepartmentRepository;
 import com.win.ddd.domain.employee.model.entity.Employee;
@@ -48,7 +49,7 @@ public class RegisterService {
         }
 
         DepartmentCode departmentCode = new DepartmentCode(command.departmentCode());
-        departmentRepository.findByCode(departmentCode)
+        Department department = departmentRepository.findByCode(departmentCode)
                 .orElseThrow(() -> new BusinessException(40400,"部门不存在"));
 
         Employee employee = new Employee(
@@ -70,6 +71,9 @@ public class RegisterService {
         return new AuthResult(tokenAuth.getCode().value(),
                 new CurrentUser(employee.getCode().value(),
                         account.getCode().value(),
+                        employee.getName().value(),
+                        department.getCode().value(),
+                        department.getName(),
                         Role.STAFF.name()));
     }
 }
